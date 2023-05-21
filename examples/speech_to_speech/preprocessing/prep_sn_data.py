@@ -27,7 +27,7 @@ def process(args):
         os.makedirs(args.output_dir)
 
     dir_path = os.path.realpath(args.audio_dir)
-    search_path = os.path.join(dir_path, "**/*." + args.ext)
+    search_path = os.path.join(dir_path, args.data_name, "*." + args.ext)
 
     if args.target_unit:
         unit_data = load_units(args.target_unit)
@@ -44,7 +44,9 @@ def process(args):
             sr = info.samplerate
             if sr != 16000:
                 skip += 1
+                print(sr)
                 continue
+            
 
             print(
                 "{}\t{}".format(os.path.relpath(file_path, dir_path), frames), file=o_t
