@@ -33,14 +33,16 @@ def process(args):
 
         # load target units
         target_unit_data = load_units(args.target_dir / f"{split}.txt")
+        # print(target_unit_data)
 
         manifest = {c: [] for c in MANIFEST_COLUMNS}
         missing_tgt_audios = []
         src_audios = list(args.source_dir.glob(f"{split}/*.wav"))
         for src_audio in tqdm(src_audios):
             sample_id = src_audio.stem
+            
 
-            if sample_id not in target_unit_data:
+            if sample_id not in target_unit_data.keys():
                 missing_tgt_audios.append(sample_id)
                 continue
 
@@ -86,7 +88,7 @@ def main():
     )
     parser.add_argument(
         "--data-split",
-        default=["train", "valid", "test"],
+        default=["train", "dev", "test"],
         nargs="+",
         help="data split names",
     )
