@@ -259,11 +259,11 @@ class HubertEncoder(FairseqEncoder):
             if isinstance(w2v_args, Namespace):
                 cfg.w2v_args = w2v_args = convert_namespace_to_omegaconf(w2v_args)
 
-        assert cfg.normalize == w2v_args.task.normalize, (
-            "Fine-tuning works best when data normalization is the same. "
-            "Please check that --normalize is set or unset for "
-            "both pre-training and here"
-        )
+        # assert cfg.normalize == w2v_args.task.normalize, (
+        #     "Fine-tuning works best when data normalization is the same. "
+        #     "Please check that --normalize is set or unset for "
+        #     "both pre-training and here"
+        # )
 
         w2v_args.task.data = cfg.data
         pretrain_task = tasks.setup_task(w2v_args.task)

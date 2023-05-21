@@ -141,3 +141,6 @@ wandb/
 nohup.out
 multirun
 outputs
+
+# Fine-tuned Hubert checkpoints
+ckpt
