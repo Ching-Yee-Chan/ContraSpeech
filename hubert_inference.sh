@@ -1,15 +1,15 @@
-OUTPUT_DIR=/llm/nankai/zhaojiankun_space/cvss_c/ch/format_data
+OUTPUT_DIR=/llm/nankai/zhaojiankun_space/cvss_c/fr/format_data
 RESULT_PATH=/llm/nankai/zhaojiankun_space/TranSpeech/hubert_output
-SUBSET_NAME=train
+SUBSET_NAME=dev
 
-CUDA_VISIBLE_DEVICES=1,2,3,7 PYTHONPATH=. /llm/nankai/zhaojiankun_space/anaconda3/envs/s2st/bin/python \
+CUDA_VISIBLE_DEVICES=4,5,6,7 PYTHONPATH=. /llm/nankai/zhaojiankun_space/anaconda3/envs/s2st/bin/python \
    examples/speech_recognition/new/infer.py \
    --config-dir examples/hubert/config/decode/ \
    --config-name infer_viterbi \
    task.data=$OUTPUT_DIR \
    task.normalize=false \
    common_eval.results_path=$RESULT_PATH/log \
-   common_eval.path=$OUTPUT_DIR/checkpoint_best.pt \
+   common_eval.path=/llm/nankai/zhaojiankun_space/TranSpeech/ckpt/mhubert/mhubert_base_vp_en_es_fr_it3.pt \
    dataset.gen_subset=$SUBSET_NAME \
    +task.labels=["unit"] \
    +decoding.results_path=$RESULT_PATH \
