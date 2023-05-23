@@ -172,7 +172,6 @@ class NARSpeechToUnitMultitaskTaskCriterion(
         extra: ['attn', 'inner_states', 'encoder_states', 'encoder_padding_mask']
         '''
         # 1: pad; 3: mask
-
         net_output, extra = model(
             src_tokens=sample["net_input"]["src_tokens"],
             src_lengths=sample["net_input"]["src_lengths"],
@@ -181,6 +180,8 @@ class NARSpeechToUnitMultitaskTaskCriterion(
             tgt_speaker=sample["net_input"]["tgt_speaker"],
             return_all_hiddens=True,
         )
+        
+        # TODO-ZJK05: add inference of the teacher model
 
         loss, nll_loss = self.compute_loss(model, [net_output, extra['word_ins_mask']], sample, reduce=reduce)
         loss_length, nll_loss_length = self.compute_loss(model, [extra['length_out']], {'target': extra['length_tgt']}, reduce=reduce) # "loss", "nll_loss", "factor"
@@ -214,6 +215,8 @@ class NARSpeechToUnitMultitaskTaskCriterion(
 
         loss += multitask_loss
         logging_output["multitask"] = multitask_log
+        
+        # TODO-ZJK06: add alignment module
 
         return loss, sample_size, logging_output
 

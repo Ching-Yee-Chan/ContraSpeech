@@ -56,6 +56,7 @@ def process(args):
             target_units = process_units(target_unit_data[sample_id], args.reduce_unit)
             manifest["tgt_audio"].append(" ".join(target_units))
             manifest["tgt_n_frames"].append(len(target_units))
+            # TODO-ZJK01
 
         print(f"Processed {len(manifest['id'])} samples")
         if len(missing_tgt_audios) > 0:

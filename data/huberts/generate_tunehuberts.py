@@ -32,6 +32,6 @@ if __name__ == '__main__':
             for i, line in tqdm(enumerate(f_tsv_file)):
                 if i == 0: continue
                 line = line.strip('\n').split('\t')
-                id = line[0].replace('.wav', '')
+                id = line[0].replace('.wav', '').replace('dev/','').replace('test/','').replace('train/','')
                 unit = audio[id]
                 f_write.write(f"{unit}\n")

@@ -40,7 +40,7 @@ if __name__ == '__main__':
             wav_torch = torch.from_numpy(wav_numpy).float()
             wav_16k_torch_f = manipulate_median(wav_torch, sr, pitch_mean)
             wavfile.write(f'{savepath}/temp/{name}_p.wav', sr, wav_16k_torch_f.numpy())
-            energy += [np.mean(wav_16k_torch_f.numpy().abs())]
+            energy += [np.mean(np.abs(wav_16k_torch_f.numpy()))]
 
         os.makedirs(f'{savepath}/result', exist_ok=True)
         energy_mean = np.mean(energy)
@@ -48,6 +48,6 @@ if __name__ == '__main__':
         for wavpath in tqdm(wavpaths):
             name = wavpath.stem
             wav_numpy, sr = librosa.core.load(f'{savepath}/temp/{name}_p.wav', sr=sr)
-            wav_numpy = wav_numpy / np.mean(wav_numpy.abs()) * energy_mean
+            wav_numpy = wav_numpy / np.mean(np.abs(wav_numpy)) * energy_mean
             wavfile.write(f'{savepath}/result/{name}.wav', sr, wav_numpy)
         os.system(f'rm -r {savepath}/temp')

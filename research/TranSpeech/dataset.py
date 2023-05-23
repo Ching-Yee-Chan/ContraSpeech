@@ -33,10 +33,14 @@ class SpeechToSpeechFastTranslateDatasetCreator(SpeechToSpeechDatasetCreator):
         ]
         src_n_frames = [int(s[cls.KEY_SRC_N_FRAMES]) for s in samples]
         tgt_n_frames = [int(s[cls.KEY_TGT_N_FRAMES]) for s in samples]
+        
+        # TODO-ZJK02
+        
         src_langs = [s.get(cls.KEY_SRC_LANG, cls.DEFAULT_LANG) for s in samples]
         tgt_langs = [s.get(cls.KEY_TGT_LANG, cls.DEFAULT_LANG) for s in samples]
 
         has_multitask = len(multitask) > 0
+        #TODO-ZJK03
         dataset_cls = (
             SpeechToSpeechFastTranslateMultitaskDataset if has_multitask else SpeechToSpeechFastTranslateDataset
         )
@@ -162,3 +166,6 @@ class SpeechToSpeechFastTranslateMultitaskDataset(SpeechToSpeechFastTranslateDat
             }
 
         return out
+    
+    # TODO-ZJK04
+    # rewrite getitem & collate function
