@@ -16,7 +16,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 PYTHONPATH=. python research/TranSpeech/hub
 
 TGT_AUDIO=/llm/nankai/zhaojiankun_space/cvss_c/ru_16000/dev
 TGT_AUDIO_IE=/llm/nankai/zhaojiankun_space/cvss_c/ru/ie/dev
-CUDA_VISIBLE_DEVICES=7,5,3,1,0,2,4,6 PYTHONPATH=. python research/TranSpeech/hubertCTC/gen_IE.py \
+CUDA_VISIBLE_DEVICES=2,0,3,1,5,7,4,6 PYTHONPATH=. python research/TranSpeech/hubertCTC/gen_IE.py \
     --ckpt $CKPT \
     --wav $TGT_AUDIO \
     --out $TGT_AUDIO_IE
