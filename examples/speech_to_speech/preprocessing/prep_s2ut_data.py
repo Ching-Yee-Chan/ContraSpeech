@@ -17,17 +17,18 @@ from examples.speech_to_speech.preprocessing.data_utils import (
     load_units,
     process_units,
 )
-from examples.speech_to_text.data_utils import save_df_to_tsv
+from examples.speech_to_text.data_utils import save_df_to_tsv, load_df_from_tsv
 
 logger = logging.getLogger(__name__)
 
-MANIFEST_COLUMNS = ["id", "src_audio", "src_n_frames", "tgt_audio", "tgt_n_frames"]
+MANIFEST_COLUMNS = ["id", "src_audio", "src_n_frames", "src_text", "tgt_audio", "tgt_n_frames"]
 
 
 def process(args):
     args.output_root.mkdir(exist_ok=True)
 
     print("Generating manifest...")
+    src_manifest = load_df_from_tsv(args.source_dir / "validated.tsv")
     for split in args.data_split:
         print(f"Processing {split}")
 
@@ -38,6 +39,7 @@ def process(args):
         manifest = {c: [] for c in MANIFEST_COLUMNS}
         missing_tgt_audios = []
         src_audios = list(args.source_dir.glob(f"{split}/*.wav"))
+        
         for src_audio in tqdm(src_audios):
             sample_id = src_audio.stem
             
@@ -52,11 +54,18 @@ def process(args):
             manifest["src_n_frames"].append(
                 src_n_frames // 160
             )  # estimation of 10-ms frame for 16kHz audio
+            
+            # ZJK01: append the source draft to the manifest
+            src_item = src_manifest[src_manifest["path"] == sample_id]
+            # print(sample_id)
+            assert len(src_item)==1, "Should only have one item for each source audio!"
+            sentence = src_item["sentence"].to_list()[0]
+            # print(sentence)
+            manifest["src_text"].append(sentence)
 
             target_units = process_units(target_unit_data[sample_id], args.reduce_unit)
             manifest["tgt_audio"].append(" ".join(target_units))
             manifest["tgt_n_frames"].append(len(target_units))
-            # TODO-ZJK01
 
         print(f"Processed {len(manifest['id'])} samples")
         if len(missing_tgt_audios) > 0:
