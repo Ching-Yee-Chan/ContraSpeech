@@ -1,9 +1,5 @@
-# $SPLIT1, $SPLIT2, etc. are split names such as train, dev, test, etc.
-SRC_AUDIO=/home/zhaojiankun/zhaojiankun_space/commonvoice/zh/
-TGT_AUDIO=/home/zhaojiankun/zhaojiankun_space/TranSpeech/hubert_output
-SPLIT1=train
-SPLIT2=dev
-SPLIT1=test
+SRC_AUDIO=/home/zhaojiankun/zhaojiankun_space/commonvoice/ru/
+TGT_AUDIO=/home/zhaojiankun/zhaojiankun_space/TranSpeech/output/hubert_output
 DATA_ROOT=/home/zhaojiankun/zhaojiankun_space/TranSpeech/format_s2st
 VOCODER_CKPT=/home/zhaojiankun/zhaojiankun_space/TranSpeech/ckpt/hifigan/g_00600000
 VOCODER_CFG=/home/zhaojiankun/zhaojiankun_space/TranSpeech/ckpt/hifigan/config.json
