@@ -31,6 +31,7 @@ class SpeechToSpeechDatasetItem(object):
     target: Optional[torch.Tensor] = None
     target_speaker: Optional[torch.Tensor] = None
     tgt_lang_tag: Optional[int] = None
+    source_text: str = None
 
 
 class SpeechToSpeechDataset(SpeechToTextDataset):

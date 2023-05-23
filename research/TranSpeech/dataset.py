@@ -5,7 +5,7 @@ from fairseq.data.audio.speech_to_text_dataset import (
 
 class SpeechToSpeechFastTranslateDatasetCreator(SpeechToSpeechDatasetCreator):
     # mandatory columns
-    KEY_ID, KEY_SRC_AUDIO, KEY_SRC_N_FRAMES = "id", "src_audio", "src_n_frames"
+    KEY_ID, KEY_SRC_AUDIO, KEY_SRC_N_FRAMES, KEY_SRC_TEXT = "id", "src_audio", "src_n_frames", "src_text"
     KEY_TGT_AUDIO, KEY_TGT_N_FRAMES = "tgt_audio", "tgt_n_frames"
 
     @classmethod
@@ -35,6 +35,7 @@ class SpeechToSpeechFastTranslateDatasetCreator(SpeechToSpeechDatasetCreator):
         tgt_n_frames = [int(s[cls.KEY_TGT_N_FRAMES]) for s in samples]
         
         # TODO-ZJK02
+        src_text = [int(s[cls.KEY_SRC_TEXT]) for s in samples]
         
         src_langs = [s.get(cls.KEY_SRC_LANG, cls.DEFAULT_LANG) for s in samples]
         tgt_langs = [s.get(cls.KEY_TGT_LANG, cls.DEFAULT_LANG) for s in samples]
