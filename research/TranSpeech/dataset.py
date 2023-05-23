@@ -52,6 +52,7 @@ class SpeechToSpeechFastTranslateDatasetCreator(SpeechToSpeechDatasetCreator):
             data_cfg,
             src_audio_paths,
             src_n_frames,
+            src_text, 
             tgt_audio_paths,
             tgt_n_frames,
             src_langs,
@@ -97,6 +98,8 @@ class SpeechToSpeechFastTranslateDataset(SpeechToSpeechDataset):
             tgt_speakers = _collate_frames(
                 [x.target_speaker for x in samples], is_audio_input=True
             ).index_select(0, order)
+        
+        src_text = [x.source_text for x in samples]
 
         net_input = {
             "src_tokens": frames,
@@ -105,6 +108,7 @@ class SpeechToSpeechFastTranslateDataset(SpeechToSpeechDataset):
             "target_lengths": target_lengths,
             "prev_output_tokens": prev_output_tokens,
             "tgt_speaker": tgt_speakers,  # TODO: unify "speaker" and "tgt_speaker"
+            "src_text": src_text
         }
         out = {
             "id": indices,

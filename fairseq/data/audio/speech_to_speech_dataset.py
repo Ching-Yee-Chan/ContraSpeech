@@ -42,6 +42,7 @@ class SpeechToSpeechDataset(SpeechToTextDataset):
         data_cfg: S2SDataConfig,
         src_audio_paths: List[str],
         src_n_frames: List[int],
+        src_text: List[str], 
         tgt_audio_paths: List[str],
         tgt_n_frames: List[int],
         src_langs: Optional[List[str]] = None,
@@ -68,6 +69,8 @@ class SpeechToSpeechDataset(SpeechToTextDataset):
 
         self.tgt_audio_paths = tgt_audio_paths
         self.tgt_lens = [t // self.n_frames_per_step for t in tgt_n_frames]
+        
+        self.source_text = src_text
 
         assert not target_is_code or tgt_dict is not None
         self.target_is_code = target_is_code
@@ -143,6 +146,8 @@ class SpeechToSpeechDataset(SpeechToTextDataset):
             tgt_spk = torch.from_numpy(tgt_spk).float()
         else:
             tgt_spk = torch.FloatTensor([])
+            
+        source_text = self.source_text[index]
 
         return SpeechToSpeechDatasetItem(
             index=index,
@@ -150,6 +155,7 @@ class SpeechToSpeechDataset(SpeechToTextDataset):
             target=target,
             target_speaker=tgt_spk,
             tgt_lang_tag=tgt_lang_tag,
+            source_text=source_text
         )
 
     def _collate_target(self, samples: List[SpeechToSpeechDatasetItem]) -> torch.Tensor:
@@ -209,12 +215,15 @@ class SpeechToSpeechDataset(SpeechToTextDataset):
             tgt_speakers = _collate_frames(
                 [x.target_speaker for x in samples], is_audio_input=True
             ).index_select(0, order)
+            
+        src_text = [x.source_text for x in samples]
 
         net_input = {
             "src_tokens": frames,
             "src_lengths": n_frames,
             "prev_output_tokens": prev_output_tokens,
             "tgt_speaker": tgt_speakers,  # TODO: unify "speaker" and "tgt_speaker"
+            "src_text": src_text
         }
         if self.tgt_texts is not None and samples[0].tgt_lang_tag is not None:
             for i in range(len(samples)):
