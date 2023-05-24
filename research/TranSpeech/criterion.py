@@ -18,6 +18,7 @@ from fairseq.criterions.label_smoothed_cross_entropy import (
 
 import torch.nn.functional as F
 
+from research.TranSpeech.lm import LanguageModel, Adapter
 
 class MultitaskCriterion:
     def __init__(self, multitask_tasks):
@@ -141,6 +142,9 @@ class NARSpeechToUnitMultitaskTaskCriterion(
             task, sentence_avg, label_smoothing, ignore_prefix_size, report_accuracy
         )
         MultitaskCriterion.__init__(self, task.multitask_tasks)
+        # ZJK06: initialize language model    
+        self.lm = LanguageModel()
+        self.adapter = Adapter(in_channel=512)
 
     def get_lprobs_and_target(self, model, output, sample):
         if len(output) == 2:
@@ -182,12 +186,28 @@ class NARSpeechToUnitMultitaskTaskCriterion(
         )
         
         # TODO-ZJK05: add inference of the teacher model
+        # print(sample["id"][0])
+        # print(sample["net_input"]["src_text"][0])
+        lm_out = self.lm.infer(sample["net_input"]["src_text"])
+        # encoder_out: [batch_size, max_len, dim=1024]
+        # encoder_padding_mask: [batch_size, max_len], True if masked
+        speech_encoder_out = extra["encoder_out"][0].permute(1, 0, 2)
+        speech_feat, text_feat = self.adapter(speech_encoder_out, lm_out["encoder_out"])
+        l2_loss = torch.sum((speech_feat - text_feat) ** 2, dim=-1) #[batch_size, max_len_text]
+        mask = lm_out["encoder_padding_mask"]
+        count = torch.sum((mask==0).float())
+        l2_loss[mask] = 0
+        l2_loss = torch.sum(l2_loss) / count
 
         loss, nll_loss = self.compute_loss(model, [net_output, extra['word_ins_mask']], sample, reduce=reduce)
         loss_length, nll_loss_length = self.compute_loss(model, [extra['length_out']], {'target': extra['length_tgt']}, reduce=reduce) # "loss", "nll_loss", "factor"
 
         loss += loss_length
+        print(loss.data)
+        loss += 500 * l2_loss #TODO-ZJK07:add loss weight
+        print(loss.data)
         nll_loss += nll_loss_length
+        
 
         sample_size = (
             sample["target"].size(0) if self.sentence_avg else sample["ntokens"]
@@ -217,7 +237,6 @@ class NARSpeechToUnitMultitaskTaskCriterion(
         logging_output["multitask"] = multitask_log
         
         # TODO-ZJK06: add alignment module
-
         return loss, sample_size, logging_output
 
     @classmethod

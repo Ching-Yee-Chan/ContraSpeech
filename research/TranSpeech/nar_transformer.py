@@ -508,6 +508,7 @@ class NARS2UTTransformerModel(S2STransformerMultitaskModelBase):
         '''
         if return_all_hiddens:
             # For CrossEntropy loss
+            decoder_out[-1]["encoder_out"] = encoder_out["encoder_out"]
             decoder_out[-1]["encoder_states"] = encoder_out["encoder_states"]
             decoder_out[-1]["encoder_padding_mask"] = encoder_out["encoder_padding_mask"]
             decoder_out[-1]["word_ins_mask"] = word_ins_mask
