@@ -35,7 +35,7 @@ class SpeechToSpeechFastTranslateDatasetCreator(SpeechToSpeechDatasetCreator):
         tgt_n_frames = [int(s[cls.KEY_TGT_N_FRAMES]) for s in samples]
         
         # TODO-ZJK02
-        src_text = [int(s[cls.KEY_SRC_TEXT]) for s in samples]
+        src_text = [s[cls.KEY_SRC_TEXT] for s in samples]
         
         src_langs = [s.get(cls.KEY_SRC_LANG, cls.DEFAULT_LANG) for s in samples]
         tgt_langs = [s.get(cls.KEY_TGT_LANG, cls.DEFAULT_LANG) for s in samples]
@@ -99,7 +99,10 @@ class SpeechToSpeechFastTranslateDataset(SpeechToSpeechDataset):
                 [x.target_speaker for x in samples], is_audio_input=True
             ).index_select(0, order)
         
-        src_text = [x.source_text for x in samples]
+        src_text_unordered = [x.source_text for x in samples]
+        src_text = []
+        for i in order.tolist():
+            src_text.append(src_text_unordered[i])
 
         net_input = {
             "src_tokens": frames,
