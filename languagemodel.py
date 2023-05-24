@@ -19,7 +19,7 @@ sentences = ['Привет',
             ]
 tokenized_sentences = []
 for sentence in sentences:
-    tokenized_sentences.append(lm.encode('Привет'))
+    tokenized_sentences.append(lm.encode(sentence))
 batches = lm._build_batches(tokenized_sentences, False) #此处样本已经被打乱！
 for batch in batches:
     # batch.cuda()
