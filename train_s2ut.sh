@@ -1,9 +1,9 @@
-DATA_ROOT=/home/zhaojiankun/zhaojiankun_space/TranSpeech/output/format_s2st
-MODEL_DIR=/home/zhaojiankun/zhaojiankun_space/TranSpeech/output/s2ut_ckpt_new
-LOG_DIR=/home/zhaojiankun/zhaojiankun_space/TranSpeech/output/log
+DATA_ROOT=/home/zhaojiankun/zhaojiankun_space/TranSpeech/output_test/format_s2st
+MODEL_DIR=/home/zhaojiankun/zhaojiankun_space/TranSpeech/output_test/s2ut_ckpt
+LOG_DIR=/home/zhaojiankun/zhaojiankun_space/TranSpeech/output_test/log
 DATE_TIME=$(date +%m%d%H%M)
 
-CUDA_VISIBLE_DEVICES=0,1,2,5 PYTHONPATH=. nohup fairseq-train $DATA_ROOT \
+CUDA_VISIBLE_DEVICES=0,1,2,3 PYTHONPATH=. fairseq-train $DATA_ROOT \
   --config-yaml config.yaml \
   --task speech_to_speech_fasttranslate --target-is-code --target-code-size 1000 --vocoder code_hifigan  \
   --criterion nar_speech_to_unit --label-smoothing 0.2 \
@@ -15,5 +15,5 @@ CUDA_VISIBLE_DEVICES=0,1,2,5 PYTHONPATH=. nohup fairseq-train $DATA_ROOT \
   --optimizer adam --adam-betas "(0.9,0.98)" --clip-norm 10.0 \
   --max-update 400000 --max-tokens 20000 --max-target-positions 3000 --update-freq 4 \
   --seed 1 --fp16 --num-workers 8 \
-  --user-dir research/  --attn-type espnet --pos-enc-type rel_pos \
-  > ${LOG_DIR}/log_s2ut_train_${DATE_TIME}.txt &
+  --user-dir research/  --attn-type espnet --pos-enc-type rel_pos 
+  # > ${LOG_DIR}/log_s2ut_train_${DATE_TIME}.txt &
