@@ -203,9 +203,7 @@ class NARSpeechToUnitMultitaskTaskCriterion(
         loss_length, nll_loss_length = self.compute_loss(model, [extra['length_out']], {'target': extra['length_tgt']}, reduce=reduce) # "loss", "nll_loss", "factor"
 
         loss += loss_length
-        print(loss.data)
         loss += 500 * l2_loss #TODO-ZJK07:add loss weight
-        print(loss.data)
         nll_loss += nll_loss_length
         
 
@@ -215,6 +213,7 @@ class NARSpeechToUnitMultitaskTaskCriterion(
 
         logging_output = {
             "loss": loss.data,
+            "l2_loss": 500 * l2_loss.data, 
             "nll_loss": nll_loss.data,
             "loss_length": loss_length.data,
             "nll_loss_length": nll_loss_length.data,
@@ -248,6 +247,7 @@ class NARSpeechToUnitMultitaskTaskCriterion(
         nll_loss_length_sum = sum(log.get("nll_loss_length", 0) for log in logging_outputs)
         ntokens = sum(log.get("ntokens", 0) for log in logging_outputs)
         sample_size = sum(log.get("sample_size", 0) for log in logging_outputs)
+        l2_loss = sum(log.get("l2_loss", 0) for log in logging_outputs)
 
 
         metrics.log_scalar(
@@ -264,6 +264,9 @@ class NARSpeechToUnitMultitaskTaskCriterion(
         )
         metrics.log_derived(
             "ppl", lambda meters: utils.get_perplexity(meters["nll_loss"].avg)
+        )
+        metrics.log_scalar(
+            "l2_loss", l2_loss / sample_size / math.log(2), sample_size, round=3
         )
 
 

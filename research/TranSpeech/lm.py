@@ -80,4 +80,4 @@ class Adapter(nn.Module):
         # STEP3: weighted sum
         weight = F.softmax(similarity, dim=-1)
         language_feature_pred = weight @ speech_feature #[B, maxlen_language, speech_channel]
-        return language_feature, language_feature_pred
+        return language_feature_pred, language_feature
