@@ -1,4 +1,4 @@
-DIR=/llm/nankai/zhaojiankun_space/cvss_c/ru/ie
+DIR=/llm/nankai/zhaojiankun_space/cvss_c/fr/ie
 EXT=wav
 VALID=0.01
 

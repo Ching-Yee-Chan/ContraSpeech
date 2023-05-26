@@ -1,5 +1,5 @@
-MANIFEST=/home/zhaojiankun/zhaojiankun_space/cvss_c/ru/sn/manifest/valid.tsv
-OUT_QUANTIZED_FILE=/home/zhaojiankun/zhaojiankun_space/cvss_c/ru/sn/quantized/valid.txt
+MANIFEST=/home/zhaojiankun/zhaojiankun_space/cvss_c/fr/sn/manifest/train.tsv
+OUT_QUANTIZED_FILE=/home/zhaojiankun/zhaojiankun_space/cvss_c/fr/sn/quantized/train.txt
 KM_MODEL_PATH=/home/zhaojiankun/zhaojiankun_space/TranSpeech/ckpt/mhubert/mhubert_base_vp_en_es_fr_it3_L11_km1000.bin
 CKPT_PATH=/home/zhaojiankun/zhaojiankun_space/TranSpeech/ckpt/mhubert/mhubert_base_vp_en_es_fr_it3.pt
 

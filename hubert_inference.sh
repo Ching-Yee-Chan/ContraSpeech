@@ -1,4 +1,4 @@
-DATA_DIR=/llm/nankai/zhaojiankun_space/cvss_c/ru/format_data
+DATA_DIR=/llm/nankai/zhaojiankun_space/cvss_c/fr/format_data
 RESULT_PATH=/llm/nankai/zhaojiankun_space/TranSpeech/output/hubert_output
 FINETUNE_CKPT=/llm/nankai/zhaojiankun_space/TranSpeech/output/hubert_ckpt/checkpoint_best.pt
 SUBSET_NAME=dev

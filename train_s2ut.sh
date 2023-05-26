@@ -16,4 +16,4 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 PYTHONPATH=. fairseq-train $DATA_ROOT \
   --max-update 400000 --max-tokens 20000 --max-target-positions 3000 --update-freq 4 \
   --seed 1 --fp16 --num-workers 8 \
   --user-dir research/  --attn-type espnet --pos-enc-type rel_pos 
-  # > ${LOG_DIR}/log_s2ut_train_${DATE_TIME}.txt &
+  > ${LOG_DIR}/log_s2ut_train_${DATE_TIME}.txt &

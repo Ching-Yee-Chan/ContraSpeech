@@ -1,4 +1,4 @@
-SRC_AUDIO=/home/zhaojiankun/zhaojiankun_space/commonvoice/ru/
+SRC_AUDIO=/home/zhaojiankun/zhaojiankun_space/commonvoice/fr/
 TGT_AUDIO=/home/zhaojiankun/zhaojiankun_space/TranSpeech/output/hubert_output
 DATA_ROOT=/home/zhaojiankun/zhaojiankun_space/TranSpeech/output_test/format_s2st
 VOCODER_CKPT=/home/zhaojiankun/zhaojiankun_space/TranSpeech/ckpt/hifigan/g_00600000

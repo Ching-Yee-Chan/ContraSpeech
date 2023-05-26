@@ -1,6 +1,6 @@
 AUIDO_EXT=wav
-AUDIO_DIR=/home/zhaojiankun/zhaojiankun_space/cvss_c/ru/sr_16000
-DATA_DIR=/home/zhaojiankun/zhaojiankun_space/cvss_c/ru/format_data
+AUDIO_DIR=/home/zhaojiankun/zhaojiankun_space/cvss_c/fr/sr_16000
+DATA_DIR=/home/zhaojiankun/zhaojiankun_space/cvss_c/fr/format_data
 
 GEN_SUBSET=train
 CUDA_VISIBLE_DEVICES=4,5,6,7 PYTHONPATH=. python examples/speech_to_speech/preprocessing/prep_sn_data.py \
