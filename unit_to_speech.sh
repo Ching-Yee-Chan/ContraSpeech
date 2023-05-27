@@ -1,5 +1,5 @@
-RESULTS_PATH=/home/zhaojiankun/zhaojiankun_space/TranSpeech/res_output
-GEN_SUBSET=test
+RESULTS_PATH=/home/zhaojiankun/zhaojiankun_space/TranSpeech/output/mini_result
+GEN_SUBSET=mini_train
 VOCODER_CKPT=/home/zhaojiankun/zhaojiankun_space/TranSpeech/ckpt/vocoder/g_00500000
 VOCODER_CFG=/home/zhaojiankun/zhaojiankun_space/TranSpeech/ckpt/vocoder/config.json
 
