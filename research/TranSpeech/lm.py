@@ -4,7 +4,9 @@ import torch.nn.functional as F
 from fairseq import utils
 import copy
 
-class LanguageModel:
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
+class LanguageModel_Ru_En:
     def __init__(self):
         super().__init__()
         self.model = torch.hub.load(source='local', 
@@ -55,10 +57,29 @@ class LanguageModel:
             return {"encoder_out": encoder_out, "encoder_padding_mask": encoder_padding_mask}
         assert 0, "Should not reach here"
         
+class LanguageModel_Fr_En:
+    def __init__(self):
+        super().__init__()
+        self.tokenizer = AutoTokenizer.from_pretrained("Helsinki-NLP/opus-mt-fr-en")
+        model = AutoModelForSeq2SeqLM.from_pretrained("Helsinki-NLP/opus-mt-fr-en")
+        model.eval()
+        self.encoder = model.get_encoder()
+        self.encoder.cuda()
+
+    def infer(self, sentences):
+        tokens = self.tokenizer(sentences, return_tensors='pt', padding=True)   #{'input_ids': [B, maxlen], 'attention_mask': [B, maxlen]}
+        # batch.cuda()
+        device = self.encoder.device
+        tokens['input_ids'] = tokens['input_ids'].to(device)
+        tokens['attention_mask'] = tokens['attention_mask'].to(device)
+        with torch.no_grad():
+            result = self.encoder(**tokens)
+        return {"encoder_out": result['last_hidden_state'], "encoder_padding_mask": 1 - tokens['attention_mask']}
+        
 class Adapter(nn.Module):
     def __init__(self, in_channel=256, out_channel=1024):
         super().__init__()
-        self.channel_adapter = nn.Sequential(nn.Linear(in_channel, out_channel*4), nn.ReLU(), nn.Linear(out_channel*4, out_channel))
+        self.channel_adapter = nn.Linear(in_channel, out_channel)
         
     def forward(self, speech_feature, language_feature):
         """Convert speech feature into language feature
@@ -68,16 +89,34 @@ class Adapter(nn.Module):
         language_feature: [batch_size, maxlen_language, language_channel=1024]
         
         Returns:
-        language_feature_pred: [batch_size, maxlen, language_channel=1024]
+        language_feature_pred: [batch_size, maxlen_language, language_channel=1024]
+        language_feature: [batch_size, maxlen_language, language_channel=1024]
+        speech_feature_pred: [batch_size, maxlen_speech, language_channel=1024]
+        speech_feature_pred: [batch_size, maxlen_speech, language_channel=1024]
         """
         # STEP1: adapt speech feature to language
+        assert torch.isinf(speech_feature).all(), "speech_feature has INF!"
+        assert torch.isinf(language_feature).all(), "language_feature has INF!"
         speech_feature = self.channel_adapter(speech_feature)
         # STEP2: calculate cosine similarity
-        language_feature_norm = language_feature / torch.linalg.vector_norm(language_feature, dim=-1, keepdim=True)
-        speech_feature_norm = speech_feature / torch.linalg.vector_norm(speech_feature, dim=-1, keepdim=True)
+        language_length = torch.linalg.vector_norm(language_feature, dim=-1, keepdim=True)
+        language_length[torch.isinf(language_length)] = 100
+        assert torch.isinf(language_length).all(), "language_feature_norm has INF!"
+        speech_length = torch.linalg.vector_norm(speech_feature, dim=-1, keepdim=True)
+        speech_length[torch.isinf(speech_length)] = 100
+        assert torch.isinf(speech_length).all(), "speech_feature_norm has INF!"
+        language_feature_norm = language_feature / language_length
+        speech_feature_norm = speech_feature / speech_length
         language_feature_norm = language_feature_norm.to(speech_feature_norm.dtype)
         similarity = language_feature_norm @ speech_feature_norm.permute(0, 2, 1) #[B, maxlen_language, maxlen_speech]
         # STEP3: weighted sum
-        weight = F.softmax(similarity, dim=-1)
-        language_feature_pred = weight @ speech_feature #[B, maxlen_language, speech_channel]
-        return language_feature_pred, language_feature
+        assert torch.isinf(similarity).all(), "similarity has INF!"
+        weight_l2s = F.softmax(similarity, dim=-1)
+        assert torch.isinf(weight_l2s).all(), "weight_l2s has INF!"
+        language_feature_pred = weight_l2s @ speech_feature #[B, maxlen_language, speech_channel->language_channel]
+        
+        weight_s2l = F.softmax(similarity.permute(0, 2, 1), dim=-1) #[B, maxlen_speech, maxlen_language]
+        language_feature = language_feature.to(weight_s2l.dtype)
+        speech_feature_pred = weight_s2l @ language_feature    #[B, maxlen_speech, language_channel]
+        assert torch.isinf(language_feature_pred).all(), "language_feature_pred has INF!"
+        return language_feature_pred, language_feature, speech_feature_pred, speech_feature

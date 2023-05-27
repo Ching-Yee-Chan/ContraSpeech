@@ -152,4 +152,6 @@ hubert_output
 format_s2st
 .vscode
 output
+res_output
+output_test
 None

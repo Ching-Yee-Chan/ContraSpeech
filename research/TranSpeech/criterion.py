@@ -18,7 +18,8 @@ from fairseq.criterions.label_smoothed_cross_entropy import (
 
 import torch.nn.functional as F
 
-from research.TranSpeech.lm import LanguageModel, Adapter
+from research.TranSpeech.lm import LanguageModel_Fr_En, Adapter
+from fairseq.data.data_utils import lengths_to_padding_mask
 
 class MultitaskCriterion:
     def __init__(self, multitask_tasks):
@@ -143,8 +144,8 @@ class NARSpeechToUnitMultitaskTaskCriterion(
         )
         MultitaskCriterion.__init__(self, task.multitask_tasks)
         # ZJK06: initialize language model    
-        self.lm = LanguageModel()
-        self.adapter = Adapter(in_channel=512)
+        self.lm = LanguageModel_Fr_En()
+        self.adapter = Adapter(in_channel=512, out_channel=512)
 
     def get_lprobs_and_target(self, model, output, sample):
         if len(output) == 2:
@@ -192,18 +193,28 @@ class NARSpeechToUnitMultitaskTaskCriterion(
         # encoder_out: [batch_size, max_len, dim=1024]
         # encoder_padding_mask: [batch_size, max_len], True if masked
         speech_encoder_out = extra["encoder_out"][0].permute(1, 0, 2)
-        speech_feat, text_feat = self.adapter(speech_encoder_out, lm_out["encoder_out"])
-        l2_loss = torch.sum((speech_feat - text_feat) ** 2, dim=-1) #[batch_size, max_len_text]
-        mask = lm_out["encoder_padding_mask"]
-        count = torch.sum((mask==0).float())
-        l2_loss[mask] = 0
-        l2_loss = torch.sum(l2_loss) / count
-
-        loss, nll_loss = self.compute_loss(model, [net_output, extra['word_ins_mask']], sample, reduce=reduce)
+        s2l, language_feat, l2s, speech_feat = self.adapter(speech_encoder_out, lm_out["encoder_out"])
+        
+        l2_loss_s2l = torch.sum((s2l - language_feat) ** 2, dim=-1) #[batch_size, max_len_text]
+        mask_text = lm_out["encoder_padding_mask"]
+        count_s2l = torch.sum((mask_text==0).float())
+        assert count_s2l!=0, "token number should not be zero!"
+        l2_loss_s2l[mask_text] = 0
+        l2_loss_s2l = torch.sum(l2_loss_s2l) / count_s2l
+        assert torch.isinf(l2_loss_s2l).all(), "l2_loss_s2l has INF!"
+        
+        l2_loss_l2s = torch.sum((l2s - speech_feat) ** 2, dim=-1) #[batch_size, max_len_speech]
+        # mask_speech = extra['encoder_padding_mask'][0]  #[batch_size, max_len_speech]
+        # count_l2s = torch.sum((mask_speech==0).float())
+        # l2_loss_l2s[mask_speech] = 0
+        l2_loss_l2s = torch.mean(l2_loss_l2s)
+        
+        l2_loss = 250 * l2_loss_s2l + 250 * l2_loss_l2s
+        
+        ctc_loss, nll_loss = self.compute_loss(model, [net_output, extra['word_ins_mask']], sample, reduce=reduce)
         loss_length, nll_loss_length = self.compute_loss(model, [extra['length_out']], {'target': extra['length_tgt']}, reduce=reduce) # "loss", "nll_loss", "factor"
 
-        loss += loss_length
-        loss += 500 * l2_loss #TODO-ZJK07:add loss weight
+        loss = ctc_loss + loss_length + l2_loss #TODO-ZJK07:add loss weight
         nll_loss += nll_loss_length
         
 
@@ -213,7 +224,9 @@ class NARSpeechToUnitMultitaskTaskCriterion(
 
         logging_output = {
             "loss": loss.data,
-            "l2_loss": 500 * l2_loss.data, 
+            "l2_loss_s2l": 250 * l2_loss_s2l.data, 
+            "l2_loss_l2s": 250 * l2_loss_l2s.data, 
+            "ctc_loss": ctc_loss.data, 
             "nll_loss": nll_loss.data,
             "loss_length": loss_length.data,
             "nll_loss_length": nll_loss_length.data,
@@ -247,7 +260,9 @@ class NARSpeechToUnitMultitaskTaskCriterion(
         nll_loss_length_sum = sum(log.get("nll_loss_length", 0) for log in logging_outputs)
         ntokens = sum(log.get("ntokens", 0) for log in logging_outputs)
         sample_size = sum(log.get("sample_size", 0) for log in logging_outputs)
-        l2_loss = sum(log.get("l2_loss", 0) for log in logging_outputs)
+        l2_loss_l2s = sum(log.get("l2_loss_l2s", 0) for log in logging_outputs)
+        l2_loss_s2l = sum(log.get("l2_loss_s2l", 0) for log in logging_outputs)
+        ctc_loss = sum(log.get("ctc_loss", 0) for log in logging_outputs)
 
 
         metrics.log_scalar(
@@ -266,7 +281,13 @@ class NARSpeechToUnitMultitaskTaskCriterion(
             "ppl", lambda meters: utils.get_perplexity(meters["nll_loss"].avg)
         )
         metrics.log_scalar(
-            "l2_loss", l2_loss / sample_size / math.log(2), sample_size, round=3
+            "l2_loss_l2s", l2_loss_l2s / sample_size / math.log(2), sample_size, round=3
+        )
+        metrics.log_scalar(
+            "l2_loss_s2l", l2_loss_s2l / sample_size / math.log(2), sample_size, round=3
+        )
+        metrics.log_scalar(
+            "ctc_loss", ctc_loss / sample_size / math.log(2), sample_size, round=3
         )
 
 

@@ -483,6 +483,8 @@ class NARS2UTTransformerModel(S2STransformerMultitaskModelBase):
         'src_lengths': Null list}
         '''
 
+        assert torch.isinf(encoder_out["encoder_out"][0]).all(), "encoder_out has INF!"
+
         # length prediction
         length_out = self.decoder.forward_length(  # [B, 256]
             normalize=False, encoder_out=encoder_out
