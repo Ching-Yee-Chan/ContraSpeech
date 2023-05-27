@@ -196,12 +196,15 @@ class NARSpeechToUnitMultitaskTaskCriterion(
         s2l, language_feat, l2s, speech_feat = self.adapter(speech_encoder_out, lm_out["encoder_out"])
         
         l2_loss_s2l = torch.sum((s2l - language_feat) ** 2, dim=-1) #[batch_size, max_len_text]
+        assert ~torch.isinf(l2_loss_s2l).any(), "l2_loss_s2l has INF 11111!"
         mask_text = lm_out["encoder_padding_mask"]
         count_s2l = torch.sum((mask_text==0).float())
         assert count_s2l!=0, "token number should not be zero!"
+        assert ~torch.isinf(count_s2l).any(), "count_s2l has INF!"
         l2_loss_s2l[mask_text] = 0
+        print(count_s2l)
         l2_loss_s2l = torch.sum(l2_loss_s2l) / count_s2l
-        assert torch.isinf(l2_loss_s2l).all(), "l2_loss_s2l has INF!"
+        assert ~torch.isinf(l2_loss_s2l).any(), "l2_loss_s2l has INF!"
         
         l2_loss_l2s = torch.sum((l2s - speech_feat) ** 2, dim=-1) #[batch_size, max_len_speech]
         # mask_speech = extra['encoder_padding_mask'][0]  #[batch_size, max_len_speech]
