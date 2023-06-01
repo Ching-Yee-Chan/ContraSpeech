@@ -19,6 +19,7 @@ from fairseq.criterions.label_smoothed_cross_entropy import (
 import torch.nn.functional as F
 
 from research.TranSpeech.lm import LanguageModel_Fr_En, Adapter
+from research.TranSpeech.semantic_memory_layer import SemanticAdapter
 from fairseq.data.data_utils import lengths_to_padding_mask
 
 class MultitaskCriterion:
@@ -190,29 +191,34 @@ class NARSpeechToUnitMultitaskTaskCriterion(
         # print(sample["id"][0])
         # print(sample["net_input"]["src_text"][0])
         lm_out = self.lm.infer(sample["net_input"]["src_text"])
+        # language model output forward semantic adapter for text semantic fusion
+        lm_feat = lm_out["encoder_out"].permute(1, 0, 2).to(torch.float16)
+        lm_mask = lm_out["encoder_padding_mask"].to(torch.float16)
+        model.encoder.semantic_adapter(lm_feat, lm_mask)
         # encoder_out: [batch_size, max_len, dim=1024]
         # encoder_padding_mask: [batch_size, max_len], True if masked
         speech_encoder_out = extra["encoder_out"][0].permute(1, 0, 2)
+        
         s2l, language_feat, l2s, speech_feat = self.adapter(speech_encoder_out, lm_out["encoder_out"])
         
         l2_loss_s2l = torch.sum((s2l - language_feat) ** 2, dim=-1) #[batch_size, max_len_text]
-        assert ~torch.isinf(l2_loss_s2l).any(), "l2_loss_s2l has INF 11111!"
         mask_text = lm_out["encoder_padding_mask"]
         count_s2l = torch.sum((mask_text==0).float())
         assert count_s2l!=0, "token number should not be zero!"
-        assert ~torch.isinf(count_s2l).any(), "count_s2l has INF!"
         l2_loss_s2l[mask_text] = 0
-        print(count_s2l)
-        l2_loss_s2l = torch.sum(l2_loss_s2l) / count_s2l
+        l2_loss_s2l = torch.sum(l2_loss_s2l, dtype=torch.float64) / count_s2l.to(torch.float64) #avoid overflow
+        l2_loss_s2l = l2_loss_s2l.float()
         assert ~torch.isinf(l2_loss_s2l).any(), "l2_loss_s2l has INF!"
         
         l2_loss_l2s = torch.sum((l2s - speech_feat) ** 2, dim=-1) #[batch_size, max_len_speech]
         # mask_speech = extra['encoder_padding_mask'][0]  #[batch_size, max_len_speech]
         # count_l2s = torch.sum((mask_speech==0).float())
         # l2_loss_l2s[mask_speech] = 0
-        l2_loss_l2s = torch.mean(l2_loss_l2s)
+        l2_loss_l2s = l2_loss_l2s.to(torch.float64)
+        l2_loss_l2s = torch.mean(l2_loss_l2s).float()
+        assert ~torch.isinf(l2_loss_l2s).any(), "l2_loss_s2l has INF!"
         
-        l2_loss = 250 * l2_loss_s2l + 250 * l2_loss_l2s
+        l2_loss = 200 * l2_loss_s2l + 1000 * l2_loss_l2s
         
         ctc_loss, nll_loss = self.compute_loss(model, [net_output, extra['word_ins_mask']], sample, reduce=reduce)
         loss_length, nll_loss_length = self.compute_loss(model, [extra['length_out']], {'target': extra['length_tgt']}, reduce=reduce) # "loss", "nll_loss", "factor"
@@ -227,8 +233,8 @@ class NARSpeechToUnitMultitaskTaskCriterion(
 
         logging_output = {
             "loss": loss.data,
-            "l2_loss_s2l": 250 * l2_loss_s2l.data, 
-            "l2_loss_l2s": 250 * l2_loss_l2s.data, 
+            "l2_loss_s2l": 200 * l2_loss_s2l.data, 
+            "l2_loss_l2s": 1000 * l2_loss_l2s.data, 
             "ctc_loss": ctc_loss.data, 
             "nll_loss": nll_loss.data,
             "loss_length": loss_length.data,

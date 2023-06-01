@@ -35,6 +35,8 @@ from research.TranSpeech.nar_transformer import (
     s2ut_architecture_base,
 )
 
+from research.TranSpeech.semantic_memory_layer import SemanticAdapter
+
 
 logger = logging.getLogger(__name__)
 
@@ -72,12 +74,42 @@ class S2SConformerEncoder(S2TConformerEncoder):
             out["encoder_out"][0] = x
 
         return out
+    
+    
+class S2SMultitaskConformerEncoder(S2SConformerEncoder):
+    """Based on S2T transformer encoder, with support
+    to incorporate target speaker embedding."""
+
+    def __init__(self, args):
+        super().__init__(args)
+        self.semantic_adapter = SemanticAdapter(memory_size=64, dim=512, num_layers=3)
+        
+
+    def forward(
+        self, src_tokens, src_lengths, tgt_speaker=None, return_all_hiddens=False
+    ):
+        '''
+        src_tokens: B, L, 80
+        src_lengths: B
+        tgt_speaker: None
+        return_all_hiddens: True
+        '''
+        out = super().forward(src_tokens, src_lengths, return_all_hiddens)
+        x = out["encoder_out"][0]
+        if len(out["encoder_padding_mask"]) > 0:
+            src_masks = out["encoder_padding_mask"][0]  # B x T
+            x = self.semantic_adapter(x, src_masks)
+        else:
+            x = self.semantic_adapter(x)
+        out["encoder_out"][0] = x
+        out["encoder_padding_mask"] = []
+        return out
 
 
 class S2SConformerMultitaskModelBase(S2STransformerMultitaskModelBase): # NATransformerModel / FairseqEncoderDecoderModel
     @classmethod
     def build_encoder(cls, args, src_dict=None, embed_tokens=None):  # Here we don't use src_dict and embed_tokens
-        encoder = S2SConformerEncoder(args)
+        encoder = S2SMultitaskConformerEncoder(args)
         pretraining_path = getattr(args, "load_pretrained_encoder_from", None)
         if pretraining_path is not None:
             if not Path(pretraining_path).exists():

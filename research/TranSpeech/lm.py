@@ -95,28 +95,19 @@ class Adapter(nn.Module):
         speech_feature_pred: [batch_size, maxlen_speech, language_channel=1024]
         """
         # STEP1: adapt speech feature to language
-        assert ~torch.isinf(speech_feature).any(), "speech_feature has INF!"
-        assert ~torch.isinf(language_feature).any(), "language_feature has INF!"
         speech_feature = self.channel_adapter(speech_feature)
         # STEP2: calculate cosine similarity
         language_length = torch.linalg.vector_norm(language_feature, dim=-1, keepdim=True)
-        # language_length[torch.isinf(language_length)] = 100
-        assert ~torch.isinf(language_length).any(), "language_feature_norm has INF!"
         speech_length = torch.linalg.vector_norm(speech_feature, dim=-1, keepdim=True)
-        # speech_length[torch.isinf(speech_length)] = 100
-        assert ~torch.isinf(speech_length).any(), "speech_feature_norm has INF!"
         language_feature_norm = language_feature / language_length
         speech_feature_norm = speech_feature / speech_length
         language_feature_norm = language_feature_norm.to(speech_feature_norm.dtype)
         similarity = language_feature_norm @ speech_feature_norm.permute(0, 2, 1) #[B, maxlen_language, maxlen_speech]
         # STEP3: weighted sum
-        assert ~torch.isinf(similarity).any(), "similarity has INF!"
         weight_l2s = F.softmax(similarity, dim=-1)
-        assert ~torch.isinf(weight_l2s).any(), "weight_l2s has INF!"
         language_feature_pred = weight_l2s @ speech_feature #[B, maxlen_language, speech_channel->language_channel]
         
         weight_s2l = F.softmax(similarity.permute(0, 2, 1), dim=-1) #[B, maxlen_speech, maxlen_language]
         language_feature = language_feature.to(weight_s2l.dtype)
         speech_feature_pred = weight_s2l @ language_feature    #[B, maxlen_speech, language_channel]
-        assert ~torch.isinf(language_feature_pred).any(), "language_feature_pred has INF!"
         return language_feature_pred, language_feature, speech_feature_pred, speech_feature

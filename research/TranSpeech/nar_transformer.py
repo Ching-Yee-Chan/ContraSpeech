@@ -486,6 +486,9 @@ class NARS2UTTransformerModel(S2STransformerMultitaskModelBase):
         # inf_mask = torch.isinf(encoder_out["encoder_out"][0])
         # encoder_out["encoder_out"][0] = torch.where(inf_mask, 1., encoder_out["encoder_out"][0])
         assert ~torch.isinf(encoder_out["encoder_out"][0]).any(), "encoder_out has INF!"
+        # if len(encoder_out["encoder_padding_mask"])!=0:
+        #     print(encoder_out["encoder_out"][0].shape)
+        #     print(encoder_out["encoder_padding_mask"][0].shape)
 
         # length prediction
         length_out = self.decoder.forward_length(  # [B, 256]
