@@ -79,7 +79,7 @@ class LanguageModel_Fr_En:
 class Adapter(nn.Module):
     def __init__(self, in_channel=256, out_channel=1024):
         super().__init__()
-        self.channel_adapter = nn.Linear(in_channel, out_channel)
+        # self.channel_adapter = nn.Linear(in_channel, out_channel)
         
     def forward(self, speech_feature, language_feature):
         """Convert speech feature into language feature
@@ -95,7 +95,7 @@ class Adapter(nn.Module):
         speech_feature_pred: [batch_size, maxlen_speech, language_channel=1024]
         """
         # STEP1: adapt speech feature to language
-        speech_feature = self.channel_adapter(speech_feature)
+        # speech_feature = self.channel_adapter(speech_feature)
         # STEP2: calculate cosine similarity
         language_length = torch.linalg.vector_norm(language_feature, dim=-1, keepdim=True)
         speech_length = torch.linalg.vector_norm(speech_feature, dim=-1, keepdim=True)
@@ -103,11 +103,14 @@ class Adapter(nn.Module):
         speech_feature_norm = speech_feature / speech_length
         language_feature_norm = language_feature_norm.to(speech_feature_norm.dtype)
         similarity = language_feature_norm @ speech_feature_norm.permute(0, 2, 1) #[B, maxlen_language, maxlen_speech]
-        # STEP3: weighted sum
-        weight_l2s = F.softmax(similarity, dim=-1)
-        language_feature_pred = weight_l2s @ speech_feature #[B, maxlen_language, speech_channel->language_channel]
+        # # STEP3: weighted sum
+        # weight_l2s = F.softmax(similarity, dim=-1)
+        # language_feature_pred = weight_l2s @ speech_feature #[B, maxlen_language, speech_channel->language_channel]
         
-        weight_s2l = F.softmax(similarity.permute(0, 2, 1), dim=-1) #[B, maxlen_speech, maxlen_language]
-        language_feature = language_feature.to(weight_s2l.dtype)
-        speech_feature_pred = weight_s2l @ language_feature    #[B, maxlen_speech, language_channel]
-        return language_feature_pred, language_feature, speech_feature_pred, speech_feature
+        # weight_s2l = F.softmax(similarity.permute(0, 2, 1), dim=-1) #[B, maxlen_speech, maxlen_language]
+        # language_feature = language_feature.to(weight_s2l.dtype)
+        # speech_feature_pred = weight_s2l @ language_feature    #[B, maxlen_speech, language_channel]
+        # return language_feature_pred, language_feature, speech_feature_pred, speech_feature
+        
+        
+        return similarity

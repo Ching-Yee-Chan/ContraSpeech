@@ -1,4 +1,4 @@
-RESULTS_PATH=/home/zhaojiankun/zhaojiankun_space/TranSpeech/res_output
+RESULTS_PATH=/home/zhaojiankun/zhaojiankun_space/TranSpeech/output_test/res_output_mem
 GEN_SUBSET=test
 
 grep "^D\-" ${RESULTS_PATH}/generate-${GEN_SUBSET}.txt | \

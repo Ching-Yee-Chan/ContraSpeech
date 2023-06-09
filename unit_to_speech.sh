@@ -1,4 +1,4 @@
-RESULTS_PATH=/home/zhaojiankun/zhaojiankun_space/TranSpeech/res_output
+RESULTS_PATH=/home/zhaojiankun/zhaojiankun_space/TranSpeech/output_test/res_output_mem
 GEN_SUBSET=test
 VOCODER_CKPT=/home/zhaojiankun/zhaojiankun_space/TranSpeech/ckpt/vocoder/g_00500000
 VOCODER_CFG=/home/zhaojiankun/zhaojiankun_space/TranSpeech/ckpt/vocoder/config.json
@@ -7,4 +7,3 @@ CUDA_VISIBLE_DEVICES=0,1,2,5 PYTHONPATH=. python examples/speech_to_speech/gener
   --in-code-file ${RESULTS_PATH}/generate-${GEN_SUBSET}.unit \
   --vocoder $VOCODER_CKPT --vocoder-cfg $VOCODER_CFG \
   --results-path ${RESULTS_PATH} --dur-prediction
-  # --results-path ${RESULTS_PATH} 
